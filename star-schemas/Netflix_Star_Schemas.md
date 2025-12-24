@@ -454,7 +454,7 @@
 
 **Grain:** 1 row per region per year (or month)
 
-**Measures:** `population`, `target_demo_population`, `penetration_rate` (derived)
+**Measures:** `population`, `target_demo_population`, `market_coverage_pct` (derived)
 
 ```
                               ┌──────────────────┐
@@ -474,7 +474,7 @@
        └──────────────────┘     │ • population        │     └──────────────────┘
                                 │ • target_demo_      │
                                 │      population     │
-                                │ • penetration_rate  │
+                                │ • market_coverage_  │
                                 │      (derived)      │
                                 └─────────────────────┘
 ```

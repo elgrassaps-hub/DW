@@ -56,7 +56,7 @@
 | Referral Bonus Transactions                 | 1 row per bonus payout event                      | fact_referral_bonus_tx             | bonus_amount, bonus_count                                                                                   | X      |        | X      |           |            |             |        |        |          |           |                 |                 |           | X           |                  | X          | X                |          |
 | Device Linking (up to 5 devices)            | 1 row per user-device link event                  | fact_device_link                   | link_count (factless=1)                                                                                     | X      |        | X      |           |            |             |        |        | X        |           |                 |                 |           |             |                  |            |                  | X        |
 | Profile Creation/Update (factless)          | 1 row per profile create/update event             | fact_profile_event                 | profile_event_count (1)                                                                                     | X      |        | X      | X         |            | X           |        |        |          |           |                 |                 |           |             |                  |            |                  | X        |
-| Region Demographics Snapshot (public data)  | 1 row per region per year (or month)              | fact_region_demographics           | population, target_demo_population, penetration_rate (derived)                                              | X      |        |        |           |            | X           |        |        |          |           |                 |                 |           |             |                  |            |                  | X        |
+| Region Demographics Snapshot (public data)  | 1 row per region per year (or month)              | fact_region_demographics           | population, target_demo_population, market_coverage_pct (derived)                                              | X      |        |        |           |            | X           |        |        |          |           |                 |                 |           |             |                  |            |                  | X        |
 
 ## Star_Subscription_Event
 
@@ -410,7 +410,7 @@
 | Measures                    | Additivity                           | Notes                                       |              |
 | population                  | Semi-additive                        | Not additive across time                    |              |
 | target_demo_population      | Semi-additive                        |                                             |              |
-| penetration_rate            | Non-additive                         | Derived = active_subscriptions / population |              |
+| market_coverage_pct         | Non-additive                         | Derived = active_subscriptions / population |              |
 
 ## Model Checks
 

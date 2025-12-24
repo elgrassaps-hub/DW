@@ -42,12 +42,12 @@ _Detailed dimension and fact table specifications for BigQuery implementation_
 | **Marketing** | Voucher conversion & lag analysis                        | voucher_lifecycle                                   | is_activated_flag, is_converted_flag, lag_days            | +      |
 | **Marketing** | Refer-a-friend efficiency                                | referral_edge, referral_bonus_tx                    | referral_count, bonus_amount, depth_key                   | +      |
 | **Marketing** | Partner store productivity (TV bundle)                   | subscription_event (promotion_type filter)          | signup_count, partner_store_key                           | +      |
-| **Marketing** | Under-served regions vs demographics                     | region_demographics + subscription_monthly_snapshot | population, active_subscriptions, penetration_rate        | +      |  
+| **Marketing** | Under-served regions vs demographics                     | region_demographics + subscription_monthly_snapshot | population, active_subscriptions, market_coverage_pct     | +      |  
 | **Product**   | Most demanded content (watch time)                       | viewing_session                                     | watch_seconds, session_count, content_key                 | +      |
 | **Product**   | User demographics × content × device × time              | viewing_session + dim_profile                       | profile demographics, device_key, time_key                | +      |
 | **Fraud**     | Simultaneous multi-location streaming detection          | viewing_session                                     | start_ts, end_ts, geo_key, profile_key                    | +      |
 
-**Result: ALL 12 analytical requirements are covered ✅**
+**Result: All 12 analytical requirements are covered.**
 
 ---
 
@@ -698,7 +698,7 @@ _Detailed dimension and fact table specifications for BigQuery implementation_
 | target_demo_population   | INT64       | Measure   | Target demographic population (semi-additive)|
 | households_count         | INT64       | Measure   | Number of households (semi-additive)         |
 | internet_penetration_pct | NUMERIC     | Measure   | % with internet (non-additive)               |
-| penetration_rate         | NUMERIC     | Derived   | active_subscriptions / population            |
+| market_coverage_pct      | NUMERIC     | Derived   | active_subscriptions / population            |
 | etl_inserted_ts          | TIMESTAMP   | —         | Record insert timestamp                      |
 | etl_batch_id             | STRING      | —         | ETL batch identifier                         |
 
@@ -722,7 +722,7 @@ All dimension and fact tables include standard ETL service columns:
 
 | Category         | Count | Tables                                                                                                                                                                                                            |
 |:-----------------|:-----:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Dimensions**   |  16   | date, time, user, profile, geography, plan, term, device, content, rights_holder, partner_store, promotion, payment_method, currency, voucher, referral_depth, status, prospect                                   |
+| **Dimensions**   |  18   | date, time, user, profile, geography, plan, term, device, content, rights_holder, partner_store, promotion, payment_method, currency, voucher, referral_depth, status, prospect                                   |
 | **Facts**        |  12   | subscription_event, subscription_monthly_snapshot, plan_change, voucher_sale, voucher_lifecycle, viewing_session, content_tx, referral_edge, referral_bonus_tx, device_link, profile_event, region_demographics   |
-| **Total Tables** |  28   |                                                                                                                                                                                                                   |
+| **Total Tables** |  30   |                                                                                                                                                                                                                   |
 

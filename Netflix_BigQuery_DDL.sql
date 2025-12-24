@@ -1,5 +1,63 @@
--- BigQuery DDL for dimensional warehouse
--- TODO: replace YOUR_PROJECT.YOUR_DATASET with actual values
+-- ============================================
+-- NETFLIX DATA WAREHOUSE - BigQuery DDL
+-- ============================================
+--
+-- SETUP INSTRUCTIONS
+--
+-- Prerequisites:
+--   1. GCP project with billing enabled
+--   2. BigQuery API enabled (APIs & Services > Enable APIs)
+--   3. Permissions: BigQuery Data Editor or BigQuery Admin
+--
+-- ============================================
+-- OPTION A: Google Cloud Console (UI)
+-- ============================================
+--   1. Go to console.cloud.google.com
+--   2. Select your project from the dropdown
+--   3. Navigate: Menu > BigQuery
+--   4. Create dataset:
+--      - Click "+ CREATE DATASET" in Explorer panel
+--      - Dataset ID: netflix_dw
+--      - Data location: EU (or your preferred region)
+--      - Default table expiration: Leave empty
+--      - Click "CREATE DATASET"
+--   5. Run DDL:
+--      - Click "COMPOSE NEW QUERY" (or + icon)
+--      - Copy this entire script
+--      - Replace YOUR_PROJECT.YOUR_DATASET with: your-project-id.netflix_dw
+--      - Click "RUN"
+--   6. Verify: Expand netflix_dw dataset to see all tables
+--
+-- ============================================
+-- OPTION B: gcloud CLI / bq command-line
+-- ============================================
+--   # Install gcloud SDK if not already: https://cloud.google.com/sdk/docs/install
+--
+--   # Authenticate
+--   gcloud auth login
+--   gcloud config set project YOUR_PROJECT_ID
+--
+--   # Create dataset
+--   bq mk --location=EU --dataset YOUR_PROJECT_ID:netflix_dw
+--
+--   # Run DDL (after replacing YOUR_PROJECT.YOUR_DATASET in this file)
+--   bq query --use_legacy_sql=false --project_id=YOUR_PROJECT_ID < Netflix_BigQuery_DDL.sql
+--
+--   # Or run inline (for quick test):
+--   bq query --use_legacy_sql=false "CREATE TABLE IF NOT EXISTS netflix_dw.dim_date (...)"
+--
+--   # Verify tables created
+--   bq ls netflix_dw
+--
+-- ============================================
+-- OPTION C: Terraform (Infrastructure as Code)
+-- ============================================
+--   # See: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_table
+--   # Example in separate .tf file
+--
+-- ============================================
+--
+-- TODO: replace YOUR_PROJECT.YOUR_DATASET with your-project-id.netflix_dw
 
 -- Dimensions
 
@@ -164,6 +222,8 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_prospect` (
 
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_subscription_event` (
   subscription_event_id STRING NOT NULL,
+  subscription_id STRING,                -- degenerate dimension
+  contract_id STRING,                    -- degenerate dimension
   event_date DATE NOT NULL,
   event_date_key INT64 NOT NULL,
   user_key INT64 NOT NULL,
@@ -178,14 +238,18 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_subscription_event` (
   status_key INT64,
   price_amount NUMERIC,
   discount_amount NUMERIC,
+  net_amount NUMERIC,
   months_purchased INT64,
-  signup_count INT64
+  signup_count INT64,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY event_date
 CLUSTER BY user_key, plan_key, geo_key, promotion_key;
 
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_subscription_monthly_snapshot` (
   snapshot_id STRING NOT NULL,
+  subscription_id STRING,                -- degenerate dimension
   snapshot_month_start DATE NOT NULL,
   month_start_date_key INT64 NOT NULL,
   user_key INT64 NOT NULL,
@@ -196,13 +260,16 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_subscription_monthly_
   active_flag BOOL,
   active_subscriptions INT64,
   mrr_amount NUMERIC,
-  tenure_months INT64
+  tenure_months INT64,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY snapshot_month_start
 CLUSTER BY geo_key, plan_key, user_key;
 
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_plan_change` (
   plan_change_id STRING NOT NULL,
+  subscription_id STRING,                -- degenerate dimension
   change_date DATE NOT NULL,
   change_date_key INT64 NOT NULL,
   user_key INT64 NOT NULL,
@@ -214,13 +281,16 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_plan_change` (
   status_key INT64,
   delta_mrr NUMERIC,
   churn_flag BOOL,
-  change_count INT64
+  change_count INT64,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY change_date
 CLUSTER BY user_key, from_plan_key, to_plan_key;
 
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_voucher_sale` (
   voucher_sale_id STRING NOT NULL,
+  voucher_code STRING,                   -- degenerate dimension
   sale_date DATE NOT NULL,
   sale_date_key INT64 NOT NULL,
   prospect_key INT64,
@@ -229,7 +299,9 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_voucher_sale` (
   voucher_key INT64,
   promotion_key INT64,
   voucher_sale_count INT64,
-  voucher_price_amount NUMERIC
+  voucher_price_amount NUMERIC,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY sale_date
 CLUSTER BY partner_store_key, geo_key, voucher_key;
@@ -237,6 +309,7 @@ CLUSTER BY partner_store_key, geo_key, voucher_key;
 -- accumulating snapshot
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_voucher_lifecycle` (
   voucher_key INT64 NOT NULL,
+  voucher_code STRING,                   -- degenerate dimension
   sale_date DATE,
   sale_date_key INT64,
   activation_date DATE,
@@ -248,10 +321,14 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_voucher_lifecycle` (
   partner_store_key INT64,
   promotion_key INT64,
   status_key INT64,
+  converted_subscription_id STRING,      -- degenerate dimension
   lag_sale_to_activation_days INT64,
   lag_activation_to_conversion_days INT64,
   is_activated_flag BOOL,
-  is_converted_flag BOOL
+  is_converted_flag BOOL,
+  etl_inserted_ts TIMESTAMP,
+  etl_updated_ts TIMESTAMP,              -- accumulating snapshot needs update tracking
+  etl_batch_id STRING
 )
 -- Partition by sale_date (or activation_date) depending on query patterns
 PARTITION BY sale_date
@@ -272,7 +349,10 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_viewing_session` (
   content_key INT64,
   status_key INT64,
   watch_seconds INT64,
-  session_count INT64
+  session_count INT64,
+  concurrent_stream_flag BOOL,           -- for fraud detection
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY start_date
 CLUSTER BY user_key, profile_key, content_key, geo_key, device_key;
@@ -296,7 +376,9 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_content_tx` (
   gross_amount NUMERIC,
   net_amount NUMERIC,
   royalty_amount NUMERIC,
-  tx_count INT64
+  tx_count INT64,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY tx_date
 CLUSTER BY user_key, content_key, rights_holder_key, geo_key;
@@ -309,7 +391,9 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_referral_edge` (
   referrer_user_key INT64 NOT NULL,
   referred_user_key INT64 NOT NULL,
   promotion_key INT64,
-  referral_count INT64
+  referral_count INT64,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY referral_date
 CLUSTER BY referrer_user_key, referred_user_key;
@@ -324,7 +408,9 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_referral_bonus_tx` (
   promotion_key INT64,
   currency_key INT64,
   bonus_amount NUMERIC,
-  bonus_count INT64
+  bonus_count INT64,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY bonus_date
 CLUSTER BY beneficiary_user_key, depth_key;
@@ -337,7 +423,9 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_device_link` (
   user_key INT64 NOT NULL,
   device_key INT64 NOT NULL,
   status_key INT64,
-  link_count INT64
+  link_count INT64,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY event_date
 CLUSTER BY user_key, device_key;
@@ -351,7 +439,9 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_profile_event` (
   profile_key INT64 NOT NULL,
   geo_key INT64,
   status_key INT64,
-  profile_event_count INT64
+  profile_event_count INT64,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY event_date
 CLUSTER BY user_key, profile_key;
@@ -364,7 +454,11 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_region_demographics` 
   geo_key INT64 NOT NULL,
   status_key INT64,
   population INT64,
-  target_demo_population INT64
+  target_demo_population INT64,
+  households_count INT64,
+  internet_penetration_pct NUMERIC,
+  etl_inserted_ts TIMESTAMP,
+  etl_batch_id STRING
 )
 PARTITION BY year_date
 CLUSTER BY geo_key;
