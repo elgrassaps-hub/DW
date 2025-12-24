@@ -447,6 +447,9 @@ PARTITION BY event_date
 CLUSTER BY user_key, profile_key;
 
 -- external data
+-- Derived metric (calculated at query time, not stored):
+--   market_coverage_pct = SUM(active_subscriptions) / population
+--   Requires JOIN with fact_subscription_monthly_snapshot by geo_key + date
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_region_demographics` (
   record_id STRING NOT NULL,
   year_date DATE NOT NULL,
