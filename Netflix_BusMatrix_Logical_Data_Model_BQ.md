@@ -1,7 +1,5 @@
 # Netflix Bus Matrix → Logical Data Model (BigQuery)
 
-_Source: `Netflix_BusMatrix_Logical_Data_Model_BQ.xlsx`_
-
 
 ## Requirements Coverage
 
@@ -418,9 +416,10 @@ _Source: `Netflix_BusMatrix_Logical_Data_Model_BQ.xlsx`_
 
 | Check                       | Rule of thumb                                | Status   | Notes                                                                                    |
 |:----------------------------|:---------------------------------------------|:---------|:-----------------------------------------------------------------------------------------|
-| Grain defined for each fact | Every fact table must declare one grain      | PASS     |                                                                                          |
-| No mixed-grain facts        | Header measures allocated or separated       | PASS     | Header-level subscription amounts modeled as transaction facts; viewing is session grain |
-| Conformed dimensions        | Shared dimensions reused across facts        | PASS     | Date, User, Geo, Plan, Content, Device are conformed                                     |
-| Voucher lags                | Use accumulating snapshot for milestone lags | PASS     | Voucher lifecycle fact                                                                   |
-| Referral pyramid            | Handle variable-depth hierarchy              | PASS     | Bonus tx + depth dim; closure/path in ETL if needed                                      |
-| Fraud requirement           | Needs session intervals + geo + profile      | PASS     | Viewing session fact includes start/end timestamps                                       |
+| Grain defined for each fact | Every fact table must declare one grain      | OK       |                                                                                          |
+| No mixed-grain facts        | Header measures allocated or separated       | OK       | Header-level subscription amounts modeled as transaction facts; viewing is session grain |
+| Conformed dimensions        | Shared dimensions reused across facts        | OK       | Date, User, Geo, Plan, Content, Device are conformed                                     |
+| Voucher lags                | Use accumulating snapshot for milestone lags | OK       | Voucher lifecycle fact                                                                   |
+| Referral pyramid            | Handle variable-depth hierarchy              | OK       | Bonus tx + depth dim; closure/path in ETL if needed                                      |
+| Fraud requirement           | Needs session intervals + geo + profile      | OK       | Viewing session fact includes start/end timestamps                                       |
+| Currency conversion rates   | Need exchange rate table for multi-currency  | TODO     | Will need dim_exchange_rate or snapshot fact later                                       |

@@ -1,12 +1,7 @@
--- BigQuery DDL (logical model) for Netflix-style dimensional warehouse
--- Replace `YOUR_PROJECT.YOUR_DATASET` with your target dataset.
--- Recommended: create dataset first, then run table DDL statements.
+-- BigQuery DDL for dimensional warehouse
+-- TODO: replace YOUR_PROJECT.YOUR_DATASET with actual values
 
--- ===== Dataset =====
--- CREATE SCHEMA IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET`
--- OPTIONS(location="EU", description="Netflix-style dimensional warehouse");
-
--- ===== Dimensions =====
+-- Dimensions
 
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_date` (
   date_key INT64 NOT NULL,            -- yyyymmdd
@@ -39,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_geography` (
   longitude_bucket STRING
 );
 
--- SCD2 (hybrid) example: user (account)
+-- user dim (SCD2)
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_user` (
   user_key INT64 NOT NULL,
   user_id STRING NOT NULL,            -- business key
@@ -52,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_user` (
   email_hash STRING
 );
 
--- SCD2 example: profile (family profile)
+-- profile dim
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_profile` (
   profile_key INT64 NOT NULL,
   profile_id STRING NOT NULL,         -- business key
@@ -66,7 +61,6 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_profile` (
   is_family_default BOOL
 );
 
--- SCD2 optional: plan
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_plan` (
   plan_key INT64 NOT NULL,
   plan_code STRING NOT NULL,          -- business key
@@ -165,9 +159,8 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.dim_prospect` (
   geo_key INT64
 );
 
--- ===== Facts =====
--- Note: BigQuery partitioning works best on DATE/TIMESTAMP columns.
--- We store both: event_date (for partition) + date_key (for joining to dim_date).
+-- Facts
+-- TODO: verify partition/cluster columns with actual query patterns
 
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_subscription_event` (
   subscription_event_id STRING NOT NULL,
@@ -241,7 +234,7 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_voucher_sale` (
 PARTITION BY sale_date
 CLUSTER BY partner_store_key, geo_key, voucher_key;
 
--- Accumulating snapshot: one row per voucher; update at milestones
+-- accumulating snapshot
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_voucher_lifecycle` (
   voucher_key INT64 NOT NULL,
   sale_date DATE,
@@ -284,7 +277,6 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_viewing_session` (
 PARTITION BY start_date
 CLUSTER BY user_key, profile_key, content_key, geo_key, device_key;
 
--- Purchases + rentals (distinguish via status/promotion or add tx_type column)
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_content_tx` (
   tx_id STRING NOT NULL,
   tx_ts TIMESTAMP NOT NULL,
@@ -309,7 +301,7 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_content_tx` (
 PARTITION BY tx_date
 CLUSTER BY user_key, content_key, rights_holder_key, geo_key;
 
--- Direct referral edges (factless)
+-- factless
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_referral_edge` (
   edge_id STRING NOT NULL,
   referral_date DATE NOT NULL,
@@ -322,7 +314,6 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_referral_edge` (
 PARTITION BY referral_date
 CLUSTER BY referrer_user_key, referred_user_key;
 
--- Bonus payout transactions (direct + indirect)
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_referral_bonus_tx` (
   bonus_tx_id STRING NOT NULL,
   bonus_date DATE NOT NULL,
@@ -338,7 +329,7 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_referral_bonus_tx` (
 PARTITION BY bonus_date
 CLUSTER BY beneficiary_user_key, depth_key;
 
--- Device linking (factless)
+-- factless
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_device_link` (
   link_event_id STRING NOT NULL,
   event_date DATE NOT NULL,
@@ -351,7 +342,7 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_device_link` (
 PARTITION BY event_date
 CLUSTER BY user_key, device_key;
 
--- Profile create/update events (factless)
+-- factless
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_profile_event` (
   profile_event_id STRING NOT NULL,
   event_date DATE NOT NULL,
@@ -365,7 +356,7 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_profile_event` (
 PARTITION BY event_date
 CLUSTER BY user_key, profile_key;
 
--- Public demographics snapshot
+-- external data
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_region_demographics` (
   record_id STRING NOT NULL,
   year_date DATE NOT NULL,
