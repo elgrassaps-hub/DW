@@ -704,20 +704,42 @@ Below are detailed star schemas showing all attributes, similar to a Logical Dat
 
 ## Bus Matrix Summary
 
-| Fact Table                       | Date | Time | User | Profile | Prospect | Geo | Plan | Term | Device | Content | Rights Holder | Partner Store | Voucher | Promotion | Payment Method | Currency | Referral Depth | Status |
-|:---------------------------------|:----:|:----:|:----:|:-------:|:--------:|:---:|:----:|:----:|:------:|:-------:|:-------------:|:-------------:|:-------:|:---------:|:--------------:|:--------:|:--------------:|:------:|
-| subscription_event               | ✗    |      | ✗    |         |          | ✗   | ✗    | ✗    |        |         |               | ✗             | ✗       | ✗         | ✗              | ✗        |                | ✗      |
-| subscription_monthly_snapshot    | ✗    |      | ✗    |         |          | ✗   | ✗    | ✗    |        |         |               |               |         |           |                |          |                | ✗      |
-| plan_change                      | ✗    |      | ✗    |         |          | ✗   | ✗    |      | ✗      |         |               |               |         | ✗         |                |          |                | ✗      |
-| voucher_sale                     | ✗    |      |      |         | ✗        | ✗   |      |      |        |         |               | ✗             | ✗       | ✗         |                |          |                |        |
-| voucher_lifecycle                | ✗    |      |      |         | ✗        | ✗   |      |      |        |         |               | ✗             | ✗       | ✗         |                |          |                | ✗      |
-| viewing_session                  | ✗    | ✗    | ✗    | ✗       |          | ✗   | ✗    |      | ✗      | ✗       |               |               |         |           |                |          |                | ✗      |
-| content_tx                       | ✗    | ✗    | ✗    | ✗       |          | ✗   |      |      | ✗      | ✗       | ✗             |               |         | ✗         | ✗              | ✗        |                | ✗      |
-| referral_edge                    | ✗    |      | ✗    |         |          |     |      |      |        |         |               |               |         | ✗         |                |          |                |        |
-| referral_bonus_tx                | ✗    |      | ✗    |         |          |     |      |      |        |         |               |               |         | ✗         |                | ✗        | ✗              |        |
-| device_link                      | ✗    |      | ✗    |         |          |     |      |      | ✗      |         |               |               |         |           |                |          |                | ✗      |
-| profile_event                    | ✗    |      | ✗    | ✗       |          | ✗   |      |      |        |         |               |               |         |           |                |          |                | ✗      |
-| region_demographics              | ✗    |      |      |         |          | ✗   |      |      |        |         |               |               |         |           |                |          |                | ✗      |
+_Columns ordered by usage frequency (most used dimensions on the left)_
+
+| Fact Table                    | Date | User | Geo | Status | Promotion | Plan | Device | Profile | Partner Store | Voucher | Currency | Term | Time | Content | Prospect | Payment Method | Rights Holder | Referral Depth |
+|:------------------------------|:----:|:----:|:---:|:------:|:---------:|:----:|:------:|:-------:|:-------------:|:-------:|:--------:|:----:|:----:|:-------:|:--------:|:--------------:|:-------------:|:--------------:|
+| subscription_event            | ✗    | ✗    | ✗   | ✗      | ✗         | ✗    |        |         | ✗             | ✗       | ✗        | ✗    |      |         |          | ✗              |               |                |
+| subscription_monthly_snapshot | ✗    | ✗    | ✗   | ✗      |           | ✗    |        |         |               |         |          | ✗    |      |         |          |                |               |                |
+| plan_change                   | ✗    | ✗    | ✗   | ✗      | ✗         | ✗    | ✗      |         |               |         |          |      |      |         |          |                |               |                |
+| voucher_sale                  | ✗    |      | ✗   |        | ✗         |      |        |         | ✗             | ✗       |          |      |      |         | ✗        |                |               |                |
+| voucher_lifecycle             | ✗    |      | ✗   | ✗      | ✗         |      |        |         | ✗             | ✗       |          |      |      |         | ✗        |                |               |                |
+| viewing_session               | ✗    | ✗    | ✗   | ✗      |           | ✗    | ✗      | ✗       |               |         |          |      | ✗    | ✗       |          |                |               |                |
+| content_tx                    | ✗    | ✗    | ✗   | ✗      | ✗         |      | ✗      | ✗       |               |         | ✗        |      | ✗    | ✗       |          | ✗              | ✗             |                |
+| referral_edge                 | ✗    | ✗    |     |        | ✗         |      |        |         |               |         |          |      |      |         |          |                |               |                |
+| referral_bonus_tx             | ✗    | ✗    |     |        | ✗         |      |        |         |               |         | ✗        |      |      |         |          |                |               | ✗              |
+| device_link                   | ✗    | ✗    |     | ✗      |           |      | ✗      |         |               |         |          |      |      |         |          |                |               |                |
+| profile_event                 | ✗    | ✗    | ✗   | ✗      |           |      |        | ✗       |               |         |          |      |      |         |          |                |               |                |
+| region_demographics           | ✗    |      | ✗   | ✗      |           |      |        |         |               |         |          |      |      |         |          |                |               |                |
+| **Usage Count**               | 12   | 9    | 9   | 9      | 7         | 4    | 4      | 3       | 3             | 3       | 3        | 2    | 2    | 2       | 2        | 2              | 1             | 1              |
+
+---
+
+## Grain & Metrics by Fact Table
+
+| Fact Table                    | Grain (Гранулярність)                                      | Key Metrics (Метрики)                                                    |
+|:------------------------------|:-----------------------------------------------------------|:-------------------------------------------------------------------------|
+| subscription_event            | 1 row per subscription purchase/activation event           | signup_count, price_amount, discount_amount, net_amount, months_purchased |
+| subscription_monthly_snapshot | 1 row per user per month per subscription (month start)    | active_subscriptions, active_flag, mrr_amount, tenure_months             |
+| plan_change                   | 1 row per plan change (upgrade/downgrade/cancel)           | change_count, delta_mrr, churn_flag                                      |
+| voucher_sale                  | 1 row per voucher sold at distribution point               | voucher_sale_count, voucher_price_amount (1 UAH)                         |
+| voucher_lifecycle             | 1 row per voucher (accumulating snapshot)                  | lag_sale_to_activation_days, lag_activation_to_conversion_days, is_activated_flag, is_converted_flag |
+| viewing_session               | 1 row per playback session (user-profile-content)          | watch_seconds, session_count, concurrent_stream_flag                     |
+| content_tx                    | 1 row per content purchase or rental transaction           | tx_count, gross_amount, net_amount, royalty_amount                       |
+| referral_edge                 | 1 row per direct referral (referrer → friend)              | referral_count (factless = 1)                                            |
+| referral_bonus_tx             | 1 row per bonus payout event (50 UAH direct, 5 UAH indirect)| bonus_count, bonus_amount                                                |
+| device_link                   | 1 row per user-device link/unlink event                    | link_count (factless = 1)                                                |
+| profile_event                 | 1 row per profile create/update event                      | profile_event_count (factless = 1)                                       |
+| region_demographics           | 1 row per region per year (public demographic data)        | population, target_demo_population, households_count, internet_penetration_pct |
 
 ---
 
