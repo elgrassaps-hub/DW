@@ -543,7 +543,7 @@ def generate_erd_image(output_file="netflix_dw_erd.png"):
         # Add relationships (FK -> PK)
         for table_name, table_def in {**SCHEMA["dimensions"], **SCHEMA["facts"]}.items():
             for col in table_def["columns"]:
-                if len(col) >= 4 and col[2] == "FK":
+                if len(col) >= 4 and "FK" in col[2]:
                     # col[3] is like "dim_date.date_key"
                     target_table, target_col = col[3].split(".")
                     dot_lines.append(f'  {table_name}:{col[0]} -> {target_table}:{target_col};')
@@ -595,7 +595,7 @@ def generate_star_schema_diagrams(output_dir="scripts"):
             fk_relations = []
             
             for col in fact_def["columns"]:
-                if len(col) >= 4 and col[2] == "FK":
+                if len(col) >= 4 and "FK" in col[2]:
                     target_table, target_col = col[3].split(".")
                     connected_dims.add(target_table)
                     fk_relations.append((col[0], target_table, target_col))
