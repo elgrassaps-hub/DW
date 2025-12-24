@@ -1,0 +1,349 @@
+# Netflix Data Warehouse ERD
+# Paste this into https://www.quickdatabasediagrams.com/
+#
+# ========== DIMENSIONS ==========
+
+dim_date
+-
+date_key INT64 PK
+calendar_date DATE
+year INT64
+quarter INT64
+month INT64
+day INT64
+day_of_week INT64
+month_start_flag BOOL
+month_end_flag BOOL
+
+dim_time
+-
+time_key INT64 PK
+hhmmss STRING
+hour INT64
+minute INT64
+second INT64
+day_part STRING
+
+dim_user
+-
+user_key INT64 PK
+user_id STRING
+effective_start_ts TIMESTAMP
+effective_end_ts TIMESTAMP
+is_current BOOL
+signup_date_key INT64 FK >- dim_date.date_key
+current_geo_key INT64 FK >- dim_geography.geo_key
+signup_channel STRING
+email_hash STRING
+
+dim_profile
+-
+profile_key INT64 PK
+profile_id STRING
+user_id STRING
+effective_start_ts TIMESTAMP
+effective_end_ts TIMESTAMP
+is_current BOOL
+age_band STRING
+gender STRING
+habitual_city STRING
+is_family_default BOOL
+
+dim_geography
+-
+geo_key INT64 PK
+country_code STRING
+country STRING
+region STRING
+city STRING
+latitude_bucket STRING
+longitude_bucket STRING
+
+dim_plan
+-
+plan_key INT64 PK
+plan_code STRING
+effective_start_ts TIMESTAMP
+effective_end_ts TIMESTAMP
+is_current BOOL
+plan_name STRING
+included_channels_cnt INT64
+included_titles_cnt INT64
+
+dim_term
+-
+term_key INT64 PK
+term_months INT64
+
+dim_device
+-
+device_key INT64 PK
+device_id STRING
+device_type STRING
+os STRING
+app_version STRING
+
+dim_content
+-
+content_key INT64 PK
+content_id STRING
+title STRING
+content_type STRING
+genre STRING
+release_year INT64
+
+dim_rights_holder
+-
+rights_holder_key INT64 PK
+rights_holder_id STRING
+name STRING
+contract_type STRING
+
+dim_partner_store
+-
+partner_store_key INT64 PK
+store_id STRING
+store_name STRING
+chain STRING
+geo_key INT64 FK >- dim_geography.geo_key
+
+dim_promotion
+-
+promotion_key INT64 PK
+promotion_code STRING
+promotion_type STRING
+description STRING
+
+dim_payment_method
+-
+payment_method_key INT64 PK
+payment_method_code STRING
+provider STRING
+
+dim_currency
+-
+currency_key INT64 PK
+iso_currency_code STRING
+currency_name STRING
+
+dim_voucher
+-
+voucher_key INT64 PK
+voucher_code STRING
+voucher_type STRING
+nominal_term_months INT64
+
+dim_referral_depth
+-
+depth_key INT64 PK
+depth INT64
+
+dim_status
+-
+status_key INT64 PK
+status_code STRING
+status_group STRING
+
+dim_prospect
+-
+prospect_key INT64 PK
+lead_id STRING
+phone_hash STRING
+effective_start_ts TIMESTAMP
+effective_end_ts TIMESTAMP
+is_current BOOL
+age_band STRING
+gender STRING
+city_at_sale STRING
+geo_key INT64 FK >- dim_geography.geo_key
+
+# ========== FACTS ==========
+
+fact_subscription_event
+-
+subscription_event_id STRING PK
+subscription_id STRING
+contract_id STRING
+event_date DATE
+event_date_key INT64 FK >- dim_date.date_key
+user_key INT64 FK >- dim_user.user_key
+geo_key INT64 FK >- dim_geography.geo_key
+plan_key INT64 FK >- dim_plan.plan_key
+term_key INT64 FK >- dim_term.term_key
+partner_store_key INT64 FK >- dim_partner_store.partner_store_key
+promotion_key INT64 FK >- dim_promotion.promotion_key
+payment_method_key INT64 FK >- dim_payment_method.payment_method_key
+currency_key INT64 FK >- dim_currency.currency_key
+voucher_key INT64 FK >- dim_voucher.voucher_key
+status_key INT64 FK >- dim_status.status_key
+price_amount NUMERIC
+discount_amount NUMERIC
+net_amount NUMERIC
+months_purchased INT64
+signup_count INT64
+
+fact_subscription_monthly_snapshot
+-
+snapshot_id STRING PK
+subscription_id STRING
+snapshot_month_start DATE
+month_start_date_key INT64 FK >- dim_date.date_key
+user_key INT64 FK >- dim_user.user_key
+geo_key INT64 FK >- dim_geography.geo_key
+plan_key INT64 FK >- dim_plan.plan_key
+term_key INT64 FK >- dim_term.term_key
+status_key INT64 FK >- dim_status.status_key
+active_flag BOOL
+active_subscriptions INT64
+mrr_amount NUMERIC
+tenure_months INT64
+
+fact_plan_change
+-
+plan_change_id STRING PK
+subscription_id STRING
+change_date DATE
+change_date_key INT64 FK >- dim_date.date_key
+user_key INT64 FK >- dim_user.user_key
+geo_key INT64 FK >- dim_geography.geo_key
+from_plan_key INT64 FK >- dim_plan.plan_key
+to_plan_key INT64 FK >- dim_plan.plan_key
+device_key INT64 FK >- dim_device.device_key
+promotion_key INT64 FK >- dim_promotion.promotion_key
+status_key INT64 FK >- dim_status.status_key
+delta_mrr NUMERIC
+churn_flag BOOL
+change_count INT64
+
+fact_voucher_sale
+-
+voucher_sale_id STRING PK
+voucher_code STRING
+sale_date DATE
+sale_date_key INT64 FK >- dim_date.date_key
+prospect_key INT64 FK >- dim_prospect.prospect_key
+geo_key INT64 FK >- dim_geography.geo_key
+partner_store_key INT64 FK >- dim_partner_store.partner_store_key
+voucher_key INT64 FK >- dim_voucher.voucher_key
+promotion_key INT64 FK >- dim_promotion.promotion_key
+voucher_sale_count INT64
+voucher_price_amount NUMERIC
+
+fact_voucher_lifecycle
+-
+voucher_key INT64 PK FK >- dim_voucher.voucher_key
+voucher_code STRING
+sale_date DATE
+sale_date_key INT64 FK >- dim_date.date_key
+activation_date DATE
+activation_date_key INT64 FK >- dim_date.date_key
+conversion_date DATE
+conversion_date_key INT64 FK >- dim_date.date_key
+prospect_key INT64 FK >- dim_prospect.prospect_key
+geo_key INT64 FK >- dim_geography.geo_key
+partner_store_key INT64 FK >- dim_partner_store.partner_store_key
+promotion_key INT64 FK >- dim_promotion.promotion_key
+status_key INT64 FK >- dim_status.status_key
+converted_subscription_id STRING
+lag_sale_to_activation_days INT64
+lag_activation_to_conversion_days INT64
+is_activated_flag BOOL
+is_converted_flag BOOL
+
+fact_viewing_session
+-
+session_id STRING PK
+start_ts TIMESTAMP
+end_ts TIMESTAMP
+start_date DATE
+start_date_key INT64 FK >- dim_date.date_key
+start_time_key INT64 FK >- dim_time.time_key
+user_key INT64 FK >- dim_user.user_key
+profile_key INT64 FK >- dim_profile.profile_key
+geo_key INT64 FK >- dim_geography.geo_key
+plan_key INT64 FK >- dim_plan.plan_key
+device_key INT64 FK >- dim_device.device_key
+content_key INT64 FK >- dim_content.content_key
+status_key INT64 FK >- dim_status.status_key
+watch_seconds INT64
+session_count INT64
+concurrent_stream_flag BOOL
+
+fact_content_tx
+-
+tx_id STRING PK
+tx_ts TIMESTAMP
+tx_date DATE
+tx_date_key INT64 FK >- dim_date.date_key
+tx_time_key INT64 FK >- dim_time.time_key
+user_key INT64 FK >- dim_user.user_key
+profile_key INT64 FK >- dim_profile.profile_key
+geo_key INT64 FK >- dim_geography.geo_key
+device_key INT64 FK >- dim_device.device_key
+content_key INT64 FK >- dim_content.content_key
+rights_holder_key INT64 FK >- dim_rights_holder.rights_holder_key
+promotion_key INT64 FK >- dim_promotion.promotion_key
+payment_method_key INT64 FK >- dim_payment_method.payment_method_key
+currency_key INT64 FK >- dim_currency.currency_key
+status_key INT64 FK >- dim_status.status_key
+gross_amount NUMERIC
+net_amount NUMERIC
+royalty_amount NUMERIC
+tx_count INT64
+
+fact_referral_edge
+-
+edge_id STRING PK
+referral_date DATE
+referral_date_key INT64 FK >- dim_date.date_key
+referrer_user_key INT64 FK >- dim_user.user_key
+referred_user_key INT64 FK >- dim_user.user_key
+promotion_key INT64 FK >- dim_promotion.promotion_key
+referral_count INT64
+
+fact_referral_bonus_tx
+-
+bonus_tx_id STRING PK
+bonus_date DATE
+bonus_date_key INT64 FK >- dim_date.date_key
+beneficiary_user_key INT64 FK >- dim_user.user_key
+originating_user_key INT64 FK >- dim_user.user_key
+depth_key INT64 FK >- dim_referral_depth.depth_key
+promotion_key INT64 FK >- dim_promotion.promotion_key
+currency_key INT64 FK >- dim_currency.currency_key
+bonus_amount NUMERIC
+bonus_count INT64
+
+fact_device_link
+-
+link_event_id STRING PK
+event_date DATE
+event_date_key INT64 FK >- dim_date.date_key
+user_key INT64 FK >- dim_user.user_key
+device_key INT64 FK >- dim_device.device_key
+status_key INT64 FK >- dim_status.status_key
+link_count INT64
+
+fact_profile_event
+-
+profile_event_id STRING PK
+event_date DATE
+event_date_key INT64 FK >- dim_date.date_key
+user_key INT64 FK >- dim_user.user_key
+profile_key INT64 FK >- dim_profile.profile_key
+geo_key INT64 FK >- dim_geography.geo_key
+status_key INT64 FK >- dim_status.status_key
+profile_event_count INT64
+
+fact_region_demographics
+-
+record_id STRING PK
+year_date DATE
+year_date_key INT64 FK >- dim_date.date_key
+geo_key INT64 FK >- dim_geography.geo_key
+status_key INT64 FK >- dim_status.status_key
+population INT64
+target_demo_population INT64
+households_count INT64
+internet_penetration_pct NUMERIC
+

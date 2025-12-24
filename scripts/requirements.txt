@@ -1,0 +1,6 @@
+# ERD Generator dependencies
+graphviz>=0.20
+
+# Optional: for BigQuery metadata queries
+google-cloud-bigquery>=3.0,<4.0
+

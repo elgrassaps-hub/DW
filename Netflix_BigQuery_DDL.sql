@@ -355,7 +355,7 @@ CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_viewing_session` (
   etl_batch_id STRING
 )
 PARTITION BY start_date
-CLUSTER BY user_key, profile_key, content_key, geo_key, device_key;
+CLUSTER BY user_key, profile_key, content_key, geo_key;
 
 CREATE TABLE IF NOT EXISTS `YOUR_PROJECT.YOUR_DATASET.fact_content_tx` (
   tx_id STRING NOT NULL,
